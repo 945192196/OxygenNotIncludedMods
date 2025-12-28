@@ -1,0 +1,69 @@
+# 反编译的游戏源码 - 不应提交到版本控制
+dnspy/
+
+# Visual Studio 编译输出
+**/bin/
+**/obj/
+
+# Visual Studio 用户特定文件
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio 临时文件
+.vs/
+*.vsidx
+*.vspscc
+*.vsp
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# Rider
+.idea/
+*.sln.iml
+
+# 编译输出文件
+*.dll
+*.pdb
+*.exe
+*.cache
+
+# 临时文件
+*.tmp
+*.temp
+*.log
+*.bak
+*.swp
+*~
+
+# 操作系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# NuGet 包（如果使用）
+packages/
+*.nupkg
+
+# 测试结果
+TestResults/
+[Tt]est[Rr]esult*/
+*.trx
+
+# 覆盖率报告
+coverage/
+*.coverage
+*.coveragexml
+
+# 构建结果
+[Bb]uild/
+[Bb]uildLog/
+*.buildlog
+
+# 注意：lib/ 目录中的依赖库通常需要保留在版本控制中
+# 如果不需要，可以取消下面的注释
+# **/lib/
+
