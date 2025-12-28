@@ -98,7 +98,7 @@ namespace SmarterConditioner
 
         public string GetSliderTooltip()
         {
-                return string.Format(SmarterConditioner.STRINGS.UI.UISIDESCREENS.AIRCONDITIONERTEMPERATURESIDESCREEN.TOOLTIP, new object[]
+                return string.Format(STRINGS.UI.UISIDESCREENS.AIRCONDITIONERTEMPERATURESIDESCREEN.TOOLTIP, new object[]
             {
                 this.targetTemperature,
                 this.SliderUnits,
@@ -130,46 +130,11 @@ namespace SmarterConditioner
         }
 
 
-        // 缓存基础功率值，避免重复获取
-        // 基础功率是固定的：空调 340W，液体冷却器 1700W
-        private float? _baseWatts = null;
-
-        private float GetBaseWatts()
-        {
-            if (!_baseWatts.HasValue)
-            {
-                // 检查是否为液体冷却器
-                bool isLiquidConditioner = this.airConditioner.GetComponent<LiquidConditioner>() != null;
-                _baseWatts = isLiquidConditioner ? 1700f : 340f;
-            }
-            return _baseWatts.Value;
-        }
-
         public float GetWattsConsumed()
         {
-            // 使用反射获取 temperatureDelta 字段
-            float temperatureDelta = GetTemperatureDelta();
-            float baseWatts = GetBaseWatts();
-            // 计算实际功率：基础功率 * (温度差 / 20)，最小为 0
-            return Mathf.Max(0f, Mathf.Abs(baseWatts * (temperatureDelta / 20f)));
-        }
-
-        private static readonly FieldInfo _temperatureDeltaField = typeof(AirConditioner)
-            .GetField("temperatureDelta", BindingFlags.NonPublic | BindingFlags.Instance);
-
-        private float GetTemperatureDelta()
-        {
-            if (_temperatureDeltaField != null && this.airConditioner != null)
-            {
-                object value = _temperatureDeltaField.GetValue(this.airConditioner);
-                if (value != null)
-                {
-                    return (float)value;
-                }
-            }
-            // 如果无法获取，使用目标温度与实际温度的差值作为估算
-            float currentTemp = this.airConditioner.TargetTemperature;
-            return Mathf.Abs(this.targetTemperature - currentTemp);
+            float baseWatts = this.airConditioner.isLiquidConditioner ? 1700f : 340f;
+            float power = Mathf.Abs(baseWatts * (this.airConditioner.temperatureDelta / 20f));
+            return Mathf.Ceil(power);
         }
 
         protected override void OnPrefabInit()
@@ -205,20 +170,21 @@ namespace SmarterConditioner
                 SetTargetTemperatureDirect(this.airConditioner, targetTemperature);
             }
             // 更新实际功率消耗
-            float actualWatts = this.GetWattsConsumed();
-            this.energyConsumer.BaseWattageRating = actualWatts;
+            this.energyConsumer.BaseWattageRating = this.GetWattsConsumed();
             
             // 同时更新 BuildingDef 中的功率值，以便电路负载计算使用
-            UpdateBuildingDefPower(actualWatts);
+            UpdateBuildingDefPower(this.GetWattsConsumed());
         }
 
         private void UpdateBuildingDefPower(float watts)
         {
+            // 通过 GetComponent 获取 Building 组件，因为 EnergyConsumer.building 是 private 的
             // 直接通过 Building.Def 属性更新功率值
             // 这样 WattsNeededWhenActive 就会返回正确的值
-            if (this.energyConsumer.building != null && this.energyConsumer.building.Def != null)
+            Building building = base.GetComponent<Building>();
+            if (building != null && building.Def != null)
             {
-                this.energyConsumer.building.Def.EnergyConsumptionWhenActive = watts;
+                building.Def.EnergyConsumptionWhenActive = watts;
             }
         }
 

@@ -114,6 +114,9 @@ namespace SmarterConditioner
                 ref float ___lastSampleTime, ref KBatchedAnimHeatPostProcessingEffect ___heatEffect, ref HandleVector<int>.Handle ___structureTemperature, 
                 ref Operational ___operational, ref int ___cooledAirOutputCell, ref float dt)
             {
+                // 获取 SmarterConditioner 组件（在整个方法中复用）
+                SmarterConditioner smarterConditioner = __instance.GetComponent<SmarterConditioner>();
+                
                 bool value = ___consumer.IsSatisfied;
                 ___envTemp = 0f;
                 ___cellCount = 0;
@@ -179,8 +182,6 @@ namespace SmarterConditioner
                 ___operational.SetActive(value);
                 _updateStatusMethod.Invoke(__instance, null);
                 
-                // 更新 SmarterConditioner 组件的功率
-                SmarterConditioner smarterConditioner = __instance.GetComponent<SmarterConditioner>();
                 if (smarterConditioner != null)
                 {
                     smarterConditioner.Update();
