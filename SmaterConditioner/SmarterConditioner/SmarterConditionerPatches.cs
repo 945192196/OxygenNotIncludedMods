@@ -51,6 +51,25 @@ namespace SmarterConditioner
             }
         }
 
+        // 补丁 EnergyConsumer.WattsNeededWhenActive 属性，返回实际功率消耗
+        // 使用 get_WattsNeededWhenActive 作为方法名（属性的 getter 方法）
+        [HarmonyPatch(typeof(EnergyConsumer), "get_WattsNeededWhenActive")]
+        private static class Patch_EnergyConsumer_WattsNeededWhenActive
+        {
+            public static bool Prefix(EnergyConsumer __instance, ref float __result)
+            {
+                // 检查是否有 SmarterConditioner 组件
+                SmarterConditioner smarterConditioner = __instance.GetComponent<SmarterConditioner>();
+                if (smarterConditioner != null)
+                {
+                    // 返回实际功率消耗
+                    __result = smarterConditioner.GetWattsConsumed();
+                    return false; // 跳过原始方法
+                }
+                return true; // 继续执行原始方法
+            }
+        }
+
         [HarmonyPatch(typeof(AirConditioner), "UpdateState")]
         private static class Patch_AirConditioner_UpdateState
         {
@@ -142,7 +161,7 @@ namespace SmarterConditioner
                         component.Mass -= num2;
                         component.ModifyDiseaseCount(-num4, "AirConditioner.UpdateState");
                         float num5 = (num - component.Temperature) * component.Element.specificHeatCapacity * num2;
-                        Debug.Log(string.Format("{0} {1} {2}", component.Temperature, num, num5));
+                        // 移除 Debug.Log 以提高性能
                         float display_dt = ((___lastSampleTime > 0f) ? (Time.time - ___lastSampleTime) : 1f);
                         ___lastSampleTime = Time.time;
                         ___heatEffect.SetHeatBeingProducedValue(Mathf.Abs(num5));
@@ -159,6 +178,14 @@ namespace SmarterConditioner
 
                 ___operational.SetActive(value);
                 _updateStatusMethod.Invoke(__instance, null);
+                
+                // 更新 SmarterConditioner 组件的功率
+                SmarterConditioner smarterConditioner = __instance.GetComponent<SmarterConditioner>();
+                if (smarterConditioner != null)
+                {
+                    smarterConditioner.Update();
+                }
+                
                 return false;
             }
         }
